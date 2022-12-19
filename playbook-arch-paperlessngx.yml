@@ -1,0 +1,174 @@
+---
+- name: Paperless on Arch playbook
+  hosts: playground
+  become: true
+  become_user: root
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_user: patrick
+
+  tasks:
+
+    - name: Create the `aur_builder` user
+      become: true
+      ansible.builtin.user:
+        name: aur_builder
+        create_home: true
+        group: wheel
+
+    - name: Allow the `aur_builder` user to run `sudo pacman` without a password
+      become: true
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/11-install-aur_builder
+        line: 'aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman'
+        create: true
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
+    - name: Install git and base-devel...
+      community.general.pacman:
+        name:
+          - git
+          - base-devel
+        state: present
+
+    - name: Gather the package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Clone yay repository...
+      become: true
+      become_user: aur_builder
+      ansible.builtin.git:
+        repo: 'https://aur.archlinux.org/yay-bin.git'
+        version: "v11.3.1"
+        dest: ~/yay-bin
+      when: "'yay-bin' not in ansible_facts.packages"
+
+    - name: Create package yay if it hasn't been installed yet...
+      become: true
+      become_user: aur_builder
+      ansible.builtin.command: /usr/bin/makepkg -si --noconfirm
+      args:
+        chdir: ~/yay-bin
+      when: "'yay-bin' not in ansible_facts.packages"
+
+    # https://github.com/kewlfft/ansible-aur
+    - name: Update arch system (using yay)
+      aur:
+        use: yay
+        update_cache: true
+        upgrade: true
+      become: true
+      become_user: aur_builder
+
+    # https://github.com/kewlfft/ansible-aur
+    - name: Install shell-related packages (using yay)
+      aur:
+        use: yay
+        name:
+          - tmux
+          - zsh
+          - bat
+          - htop
+          - starship
+          - tldr
+          - ranger
+          - ripgrep
+          - ripgrep-all
+          - fd
+          - ncdu
+          - jq
+          - neofetch
+      become: true
+      become_user: aur_builder
+
+    # Paperless-ngx --------------------------------------------------------
+    - name: Create the `paperless` user
+      become: true
+      ansible.builtin.user:
+        name: paperless_user
+        create_home: true
+        group: wheel
+
+    # Ansible can't change the group of the current signed-in "sudo user".
+    # We will create a new user with sudo rights.
+    # For me, this seems like a bug in Ansible.
+    - name: Allow the `paperless_user` user to do everything
+      become: true
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/12-install-paperless_user
+        line: 'paperless_user ALL=(ALL) NOPASSWD: ALL'
+        create: true
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
+    - name: Install docker stuff (using yay)
+      aur:
+        use: yay
+        name:
+          - docker
+          - docker-compose
+          - python-pip
+          - python-setuptools
+      become: true
+      become_user: aur_builder
+
+    # TODO Not sure if this can be replaced by Arch packages?
+    - name: Install python packages for `docker` (using pip)
+      become: true
+      become_user: paperless_user
+      ansible.builtin.pip:
+        name:
+          - docker
+          - docker-compose
+
+    - name: Ensure group `docker` exists
+      become: true
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    - name: Add `paperless_user` to group `docker`
+      become: true
+      become_user: root
+      ansible.builtin.user:
+        name: paperless_user
+        groups: docker
+        append: true
+
+    - name: Enable `docker` service
+      become: true
+      become_user: root
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Create paperless directory
+      become: true
+      become_user: paperless_user
+      ansible.builtin.file:
+        path: ~/paperless-ngx
+        state: directory
+        mode: '0755'
+
+    # NOTE: This contains username & password in plain text (see `*.env` file)
+    # NOTE:   -> look into `ansible vault` or `docker secrets`
+    - name: Copy paperless resources
+      become: true
+      become_user: paperless_user
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: ~/paperless-ngx/
+        mode: '0644'
+      with_fileglob:
+        - ./resources/*
+
+    - name: Start docker-compose
+      become: true
+      become_user: paperless_user
+      community.docker.docker_compose:
+        project_src: ~/paperless-ngx # location of docker-compose.{yml,env} files
+        pull: true # Use with state present to always pull images prior to starting the application.
+        state: present # Specifying present is the same as running docker-compose up
