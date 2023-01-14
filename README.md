@@ -213,4 +213,4 @@ On NAS:
 
 - enable SFTP
 - create a restic repo: `restic -r sftp:username@nas:restic-paperless init` (store password in keepass or similar pw-manager)
-- 
+- save restic password in an ansible vault (`group_vars/vault`)
