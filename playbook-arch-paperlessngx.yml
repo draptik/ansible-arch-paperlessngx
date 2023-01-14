@@ -161,7 +161,7 @@
         dest: ~/paperless-ngx/
         mode: '0644'
       with_fileglob:
-        - ./resources/*
+        - ./resources/docker-compose*
 
     - name: Start docker-compose
       become: true

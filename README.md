@@ -203,3 +203,14 @@ NOTE: Admin user and password are stored in plain text in `docker-compose.env`. 
 - use `community.docker.docker_compose`
 - seems to also work with `docker-compose` v2.
 
+## Backup using Restic
+
+Paperless-ngx stores all data in docker volumes. I will backup these docker volumes to my local NAS using [Restic](https://restic.net/).
+
+### Prerequisites
+
+On NAS:
+
+- enable SFTP
+- create a restic repo: `restic -r sftp:username@nas:restic-paperless init` (store password in keepass or similar pw-manager)
+- 

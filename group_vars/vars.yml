@@ -1,0 +1,3 @@
+---
+# NOTE: Also stored in keepass...
+restic_password: "{{ vault_restic_password }}"
