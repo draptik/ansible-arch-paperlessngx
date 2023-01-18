@@ -3,8 +3,7 @@ Description=Run regular backups of paperless
 
 [Timer]
 OnBootSec=15min
-# OnUnitActiveSec=1d
-OnUnitActiveSec=10min
+OnUnitActiveSec=1d
 
 [Install]
 WantedBy=timers.target
