@@ -76,20 +76,3 @@
     #     name: backup-paperless.timer
     #     state: started
     #     enabled: yes
-
-    # TODO Yea, this fails if the ssh key has been copied, but the lock file is missing
-    # - name: Copy SSH key to NAS
-    #   become: true
-    #   become_user: root
-    #   ansible.builtin.command:
-    #     cmd: /home/paperless_user/paperless-ngx/ssh-copy-id-to-nas.sh
-    #     creates: /home/paperless_user/paperless-ngx/ssh-copy-id-to-nas.lock
-
-    ## TODO This has to be replaced with a systemd.timer (aka cron)
-    # # NOTE: Everything having to do with docker volumes has to be executed as root.
-    # - name: Restic backup to NAS via SFTP (execute as root, using user `patrick` for SFTP)
-    #   become: true
-    #   become_user: root
-    #   ansible.builtin.shell: /home/paperless_user/paperless-ngx/backup-paperless-restic2nas.sh
-    #   environment:
-    #     RESTIC_PASSWORD: "{{ restic_password }}"
