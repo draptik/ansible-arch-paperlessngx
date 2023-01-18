@@ -32,7 +32,7 @@
       become: true
       become_user: aur_builder
 
-    - name: Copy scripts
+    - name: Copy ssh and backup scripts
       become: true
       become_user: root
       ansible.builtin.copy:
@@ -40,16 +40,42 @@
         dest: /home/paperless_user/paperless-ngx/
         mode: '0744'
       with_fileglob:
-        - ./resources/backup*
+        - ./resources/backup*.sh
         - ./resources/ssh*
 
-    - name: Create SSH keypair
+    - name: Create SSH keypair (if it doesn't exist yet)
       become: true
       become_user: root
       community.crypto.openssh_keypair:
         path: ~/.ssh/id_rsa
         passphrase: ""
         comment: paperless_restic_sheep
+    
+    - name: Copy systemd service and timer
+      become: true
+      become_user: root
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /etc/systemd/system/
+        mode: '0644'
+      with_fileglob:
+        - ./resources/systemd/*
+
+    - name: Copy restic password file to target
+      become: true
+      become_user: root
+      ansible.builtin.template:
+        src: ./resources/restic-pw.j2
+        dest: /root/restic-pw
+        mode: '0600'
+      
+    # - name: Start and enable system.d timer for restic backup
+    #   become: true
+    #   become_user: root
+    #   ansible.builtin.systemd:
+    #     name: backup-paperless.timer
+    #     state: started
+    #     enabled: yes
 
     # TODO Yea, this fails if the ssh key has been copied, but the lock file is missing
     # - name: Copy SSH key to NAS
@@ -59,25 +85,11 @@
     #     cmd: /home/paperless_user/paperless-ngx/ssh-copy-id-to-nas.sh
     #     creates: /home/paperless_user/paperless-ngx/ssh-copy-id-to-nas.lock
 
-    - name: Stop docker containers before running backup
-      become: true
-      become_user: paperless_user
-      community.docker.docker_compose:
-        project_src: ~/paperless-ngx # location of docker-compose.{yml,env} files
-        state: absent # Specifying absent is the same as running docker-compose down
-
-    # NOTE: Everything having to do with docker volumes has to be executed as root.
-    - name: Restic backup to NAS via SFTP (execute as root, using user `patrick` for SFTP)
-      become: true
-      become_user: root
-      ansible.builtin.shell: /home/paperless_user/paperless-ngx/backup-paperless-restic2nas.sh
-      environment:
-        RESTIC_PASSWORD: "{{ restic_password }}"
-
-
-    - name: Restart docker containers after running backup
-      become: true
-      become_user: paperless_user
-      community.docker.docker_compose:
-        project_src: ~/paperless-ngx # location of docker-compose.{yml,env} files
-        state: present # Specifying present is the same as running docker-compose up
+    ## TODO This has to be replaced with a systemd.timer (aka cron)
+    # # NOTE: Everything having to do with docker volumes has to be executed as root.
+    # - name: Restic backup to NAS via SFTP (execute as root, using user `patrick` for SFTP)
+    #   become: true
+    #   become_user: root
+    #   ansible.builtin.shell: /home/paperless_user/paperless-ngx/backup-paperless-restic2nas.sh
+    #   environment:
+    #     RESTIC_PASSWORD: "{{ restic_password }}"
