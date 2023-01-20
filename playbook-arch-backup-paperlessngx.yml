@@ -69,10 +69,10 @@
         dest: /root/restic-pw
         mode: '0600'
       
-    # - name: Start and enable system.d timer for restic backup
-    #   become: true
-    #   become_user: root
-    #   ansible.builtin.systemd:
-    #     name: backup-paperless.timer
-    #     state: started
-    #     enabled: yes
+    - name: Start and enable system.d timer for restic backup
+      become: true
+      become_user: root
+      ansible.builtin.systemd:
+        name: backup-paperless.timer
+        state: started
+        enabled: yes
