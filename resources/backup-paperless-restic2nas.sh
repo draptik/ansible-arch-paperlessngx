@@ -15,28 +15,31 @@
 ##   Backup the docker volumes. These usually reside within /var/lib/docker/volumes on the host and you need to be root in order to access them.
 ##  " 
 
+set -o nounset
+set -o errexit
+
 DEBUG_FILE="/home/paperless_user/paperless-ngx/log.txt"
 
 ## NAS Settings ----------------------------------
-NAS_USER="patrick"
-NAS_NAME="turtle"
-REPO_NAME="restic-paperless"
-REPO=$NAS_USER@$NAS_NAME:$REPO_NAME
+readonly NAS_USER="patrick"
+readonly NAS_NAME="turtle"
+readonly REPO_NAME="restic-paperless"
+readonly REPO=$NAS_USER@$NAS_NAME:$REPO_NAME
 
 ## Paperless docker volume paths -----------------
-PAPERLESS_DOCKER_VOLUME_DATA=/var/lib/docker/volumes/paperless-ngx_data
-PAPERLESS_DOCKER_VOLUME_MEDIA=/var/lib/docker/volumes/paperless-ngx_media
-PAPERLESS_DOCKER_VOLUME_PGDATA=/var/lib/docker/volumes/paperless-ngx_pgdata
+readonly PAPERLESS_DOCKER_VOLUME_DATA=/var/lib/docker/volumes/paperless-ngx_data
+readonly PAPERLESS_DOCKER_VOLUME_MEDIA=/var/lib/docker/volumes/paperless-ngx_media
+readonly PAPERLESS_DOCKER_VOLUME_PGDATA=/var/lib/docker/volumes/paperless-ngx_pgdata
 
 ## Docker compose script location ----------------
-DOCKER_COMPOSE_DIRECTORY="/home/paperless_user/paperless-ngx"
+readonly DOCKER_COMPOSE_DIRECTORY="/home/paperless_user/paperless-ngx"
 
 ## Shut down docker-compose ----------------------
 echo "Shutting down docker..." >> "${DEBUG_FILE}"
 docker-compose --project-directory="${DOCKER_COMPOSE_DIRECTORY}" down >> "${DEBUG_FILE}"
 
 ## The actual backups... -------------------------
-RESTIC_PASSWORD_FILE="/root/restic-pw"
+readonly RESTIC_PASSWORD_FILE="/root/restic-pw"
 
 echo "Trying to backup ${PAPERLESS_DOCKER_VOLUME_DATA}, ${PAPERLESS_DOCKER_VOLUME_MEDIA} and ${PAPERLESS_DOCKER_VOLUME_PGDATA}..." >> "${DEBUG_FILE}"
 
