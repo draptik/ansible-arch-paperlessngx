@@ -2,7 +2,13 @@
 ansible_user: patrick
 paperless_user: paperless_user
 
-# NOTE: Also stored in keepass...
-restic_password: "{{ vault_restic_password }}"
+nas_user: patrick
+nas_name: turtle
+repo_name: restic-paperless
 
+restic_password_file_location: "/root/restic-pw"
+restic_repo_name: "restic-paperless"
+
+# Vault
+restic_password: "{{ vault_restic_password }}"
 paperless_admin_password: "{{ vault_paperless_admin_password }}"

@@ -21,9 +21,9 @@ set -o errexit
 DEBUG_FILE="/home/paperless_user/paperless-ngx/log.txt"
 
 ## NAS Settings ----------------------------------
-readonly NAS_USER="patrick"
-readonly NAS_NAME="turtle"
-readonly REPO_NAME="restic-paperless"
+readonly NAS_USER="{{ nas_user }}"
+readonly NAS_NAME="{{ nas_name }}"
+readonly REPO_NAME="{{ restic_repo_name }}"
 readonly REPO=$NAS_USER@$NAS_NAME:$REPO_NAME
 
 ## Paperless docker volume paths -----------------
@@ -32,14 +32,14 @@ readonly PAPERLESS_DOCKER_VOLUME_MEDIA=/var/lib/docker/volumes/paperless-ngx_med
 readonly PAPERLESS_DOCKER_VOLUME_PGDATA=/var/lib/docker/volumes/paperless-ngx_pgdata
 
 ## Docker compose script location ----------------
-readonly DOCKER_COMPOSE_DIRECTORY="/home/paperless_user/paperless-ngx"
+readonly DOCKER_COMPOSE_DIRECTORY="/home/{{ paperless_user }}/paperless-ngx"
 
 ## Shut down docker-compose ----------------------
 echo "Shutting down docker..." >> "${DEBUG_FILE}"
 docker-compose --project-directory="${DOCKER_COMPOSE_DIRECTORY}" down >> "${DEBUG_FILE}"
 
 ## The actual backups... -------------------------
-readonly RESTIC_PASSWORD_FILE="/root/restic-pw"
+readonly RESTIC_PASSWORD_FILE={{ restic_password_file_location }}
 
 echo "Trying to backup ${PAPERLESS_DOCKER_VOLUME_DATA}, ${PAPERLESS_DOCKER_VOLUME_MEDIA} and ${PAPERLESS_DOCKER_VOLUME_PGDATA}..." >> "${DEBUG_FILE}"
 

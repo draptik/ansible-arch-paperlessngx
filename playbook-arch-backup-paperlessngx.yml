@@ -32,16 +32,17 @@
       become: true
       become_user: aur_builder
 
+    # Note: The `item|basename|regex` strips the `j2` extension. Found here: https://serverfault.com/a/640139
     - name: Copy ssh and backup scripts
       become: true
       become_user: root
-      ansible.builtin.copy:
+      ansible.builtin.template:
         src: "{{ item }}"
-        dest: /home/paperless_user/paperless-ngx/
+        dest: /home/paperless_user/paperless-ngx/{{ item | basename | regex_replace(' \.j2$', '')}}
         mode: '0744'
       with_fileglob:
-        - ./resources/backup*.sh
-        - ./resources/ssh*
+        - ./resources/backup-paperless-restic2nas.sh.j2
+        - ./resources/ssh-copy-id-to-nas.sh.j2
 
     - name: Create SSH keypair (if it doesn't exist yet)
       become: true
