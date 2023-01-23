@@ -7,7 +7,7 @@ Type=simple
 Restart=always
 RestartSec=1
 User=root
-ExecStart=/home/paperless_user/paperless-ngx/backup-paperless-restic2nas.sh
+ExecStart=/home/{{ paperless_user }}/paperless-ngx/backup-paperless-restic2nas.sh
 
 [Install]
 WantedBy=multi-user.target

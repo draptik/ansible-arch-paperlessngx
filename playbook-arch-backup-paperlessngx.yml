@@ -51,15 +51,21 @@
         passphrase: ""
         comment: paperless_restic_sheep
     
-    - name: Copy systemd service and timer
+    - name: Copy systemd service
+      become: true
+      become_user: root
+      ansible.builtin.template:
+        src: ./resources/systemd/backup-paperless.service.j2
+        dest: /etc/systemd/system/backup-paperless.service
+        mode: '0644'
+
+    - name: Copy systemd timer
       become: true
       become_user: root
       ansible.builtin.copy:
-        src: "{{ item }}"
-        dest: /etc/systemd/system/
+        src: ./resources/systemd/backup-paperless.timer
+        dest: /etc/systemd/system/backup-paperless.timer
         mode: '0644'
-      with_fileglob:
-        - ./resources/systemd/*
 
     - name: Copy restic password file to target
       become: true
