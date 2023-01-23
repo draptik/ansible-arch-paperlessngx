@@ -4,7 +4,6 @@ paperless_user: paperless_user
 
 nas_user: patrick
 nas_name: turtle
-repo_name: restic-paperless
 
 restic_password_file_location: "/root/restic-pw"
 restic_repo_name: "restic-paperless"
