@@ -163,6 +163,22 @@
       with_fileglob:
         - ./resources/docker-compose*
 
+    - name: Get infos on container
+      become: true
+      become_user: paperless_user
+      docker_container_info:
+        name: paperless-ngx-webserver-1
+      register: docker_result
+
+    - name: Stop docker-compose (why is this needed?)
+      become: true
+      become_user: paperless_user
+      community.docker.docker_compose:
+        project_src: ~/paperless-ngx # location of docker-compose.{yml,env} files
+        stopped: true
+        state: absent
+      when: docker_result.exists
+
     - name: Start docker-compose
       become: true
       become_user: paperless_user
