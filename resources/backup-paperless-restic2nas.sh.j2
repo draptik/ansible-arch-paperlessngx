@@ -52,7 +52,7 @@ restic \
         "${PAPERLESS_DOCKER_VOLUME_PGDATA}" \
     >> "${DEBUG_FILE}"
 
-echo "Finished with restic."
+echo "Finished with restic." >> "${DEBUG_FILE}"
 
 ## Restart docker-compose ------------------------
 echo "Restarting docker..." >> "${DEBUG_FILE}"
