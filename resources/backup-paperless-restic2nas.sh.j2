@@ -1,4 +1,5 @@
 #!/bin/bash
+# -*- mode:sh -*-
 
 ## Assumptions:
 ##
@@ -18,7 +19,14 @@
 set -o nounset
 set -o errexit
 
-DEBUG_FILE="/home/paperless_user/paperless-ngx/log.txt"
+readonly LOG_FILE="/home/{{ paperless_user }}/paperless-ngx/paperless_backup.log"
+readonly DOCKER_LOG_FILE="/home/{{ paperless_user }}/paperless-ngx/paperless_backup_docker.log"
+
+function timestamp () {
+    printf "%(%Y-%m-%d %H:%M:%S)T"
+}
+
+printf "%s =======================\n%s START...\n" "$(timestamp)" "$(timestamp)" >> "${LOG_FILE}"
 
 ## NAS Settings ----------------------------------
 readonly NAS_USER="{{ nas_user }}"
@@ -35,27 +43,35 @@ readonly PAPERLESS_DOCKER_VOLUME_PGDATA=/var/lib/docker/volumes/paperless-ngx_pg
 readonly DOCKER_COMPOSE_DIRECTORY="/home/{{ paperless_user }}/paperless-ngx"
 
 ## Shut down docker-compose ----------------------
-echo "Shutting down docker..." >> "${DEBUG_FILE}"
-docker-compose --project-directory="${DOCKER_COMPOSE_DIRECTORY}" down >> "${DEBUG_FILE}"
+printf "%s Shutting down docker...\n" "$(timestamp)" >> "${LOG_FILE}"
+docker-compose \
+    --project-directory="${DOCKER_COMPOSE_DIRECTORY}" \
+    down \
+    >> "${DOCKER_LOG_FILE}" 2>&1
 
 ## The actual backups... -------------------------
-readonly RESTIC_PASSWORD_FILE={{ restic_password_file_location }}
+readonly RESTIC_PASSWORD_FILE="{{ restic_password_file_location }}"
 
-echo "Trying to backup ${PAPERLESS_DOCKER_VOLUME_DATA}, ${PAPERLESS_DOCKER_VOLUME_MEDIA} and ${PAPERLESS_DOCKER_VOLUME_PGDATA}..." >> "${DEBUG_FILE}"
+# shellcheck disable=SC2129
+printf "%s RESTIC: Trying to backup the following folders to NAS (\"$REPO\"): ${PAPERLESS_DOCKER_VOLUME_DATA}, ${PAPERLESS_DOCKER_VOLUME_MEDIA} and ${PAPERLESS_DOCKER_VOLUME_PGDATA}...\n" "$(timestamp)" >> "${LOG_FILE}"
 
 restic \
-    --repo sftp:$REPO \
+    --repo sftp:"$REPO" \
     --password-file "${RESTIC_PASSWORD_FILE}" \
     backup \
         "${PAPERLESS_DOCKER_VOLUME_DATA}" \
         "${PAPERLESS_DOCKER_VOLUME_MEDIA}" \
         "${PAPERLESS_DOCKER_VOLUME_PGDATA}" \
-    >> "${DEBUG_FILE}"
+    >> "${LOG_FILE}" 2>&1
 
-echo "Finished with restic." >> "${DEBUG_FILE}"
+printf "%s Finished with RESTIC.\n" "$(timestamp)" >> "${LOG_FILE}"
 
 ## Restart docker-compose ------------------------
-echo "Restarting docker..." >> "${DEBUG_FILE}"
-docker-compose --project-directory="${DOCKER_COMPOSE_DIRECTORY}" up >> "${DEBUG_FILE}"
+printf "%s Restarting docker...\n" "$(timestamp)" >> "${LOG_FILE}"
+docker-compose \
+    --project-directory="${DOCKER_COMPOSE_DIRECTORY}" \
+    up \
+    --detach \
+    >> "${DOCKER_LOG_FILE}" 2>&1
 
-echo "DONE." >> "${DEBUG_FILE}"
+printf "%s DONE.\n%s -----------------------\n" "$(timestamp)" "$(timestamp)" >> "${LOG_FILE}"
