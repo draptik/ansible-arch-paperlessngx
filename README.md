@@ -69,24 +69,6 @@ ansible-playbook playbook-name.yml
 
 See the script `run-playbook-paperlessngx.sh` for a usage example.
 
-### Useful modules
-
-TODO
-
-### Variables, environments, vaults
-
-TODO
-
-### Ansible debugging strategies
-
-#### The classic: "Print-Line Debugging"
-
-TODO
-
-#### Other strategies?
-
-TODO
-
 
 ## Ansible challenges in this scenario
 
@@ -195,8 +177,6 @@ Let's try that:
 #### Configs
 
 - copy `docker-compose.{yml,env}` from resource folder to target machine
-
-NOTE: Admin user and password are stored in plain text in `docker-compose.env`. Since this application will only be running in the local intranet, this is not a big deal. In case we want to change this: Look into `ansible vault` and/or `docker secrets`.
 
 #### Start docker compose
 
