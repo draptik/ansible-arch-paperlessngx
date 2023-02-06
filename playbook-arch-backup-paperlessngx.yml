@@ -48,6 +48,14 @@
         dest: /home/{{ paperless_user }}/paperless-ngx/backup-paperless-restic2nas.sh
         mode: '0744'
 
+    - name: Copy restic restore/check script
+      become: true
+      become_user: root
+      ansible.builtin.template:
+        src: ./resources/backup-restore-ideas.sh.j2
+        dest: /home/{{ paperless_user }}/paperless-ngx/backup-restore-ideas.sh
+        mode: '0744'
+
     - name: Create SSH keypair (if it doesn't exist yet)
       become: true
       become_user: root

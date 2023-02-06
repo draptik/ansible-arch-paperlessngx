@@ -1,0 +1,97 @@
+#!/bin/bash
+# -*- mode:sh -*-
+
+## This script should not be run automatically!
+##
+## It contains ideas (!) on how to restore paperless-ngx docker volumes from NAS using Restic
+
+set -o nounset
+set -o errexit
+
+## NAS Settings ----------------------------------
+readonly NAS_USER="{{ nas_user }}"
+readonly NAS_NAME="{{ nas_name }}"
+readonly REPO_NAME="{{ restic_repo_name }}"
+readonly REPO=$NAS_USER@$NAS_NAME:$REPO_NAME
+
+## Restic settings -------------------------------
+readonly RESTIC_PASSWORD_FILE="{{ restic_password_file_location }}"
+
+## Check Restic ----------------------------------
+## `restic check --read-data` does a consistency check:
+restic \
+    --repo sftp:"$REPO" \
+    --password-file "${RESTIC_PASSWORD_FILE}" \
+    check \
+    --read-data
+
+## Example output:
+##
+# [paperless_user@sheep paperless-ngx]$ sudo ./backup-restore.sh 
+# using temporary cache in /tmp/restic-check-cache-3008679491
+# repository ab04ff57 opened (version 2, compression level auto)
+# created new cache in /tmp/restic-check-cache-3008679491
+# create exclusive lock for repository
+# load indexes
+# check all packs
+# check snapshots, trees and blobs
+# [0:34] 100.00%  30783 / 30783 snapshots
+# read all data
+# [0:13] 100.00%  30 / 30 packs
+# no errors were found
+
+## Restic restore ----------------------------------
+readonly TMP_RESTORE_FOLDER="/home/{{ paperless_user }}/tmp/restore-target"
+mkdir -p "${TMP_RESTORE_FOLDER}"
+
+## see https://www.shellcheck.net/wiki/SC2115
+rm -rf "${TMP_RESTORE_FOLDER:?}"/*
+
+restic \
+    --repo sftp:"$REPO" \
+    --password-file "${RESTIC_PASSWORD_FILE}" \
+    restore \
+    latest \
+    --verify \
+    --target "${TMP_RESTORE_FOLDER}"
+
+## Example output and some pocking around:
+##    
+# repository ab04ff57 opened (version 2, compression level auto)
+# restoring <Snapshot 346e63e2 of [/var/lib/docker/volumes/paperless-ngx_data /var/lib/docker/volumes/paperless-ngx_media /var/lib/docker/volumes/paperless-ngx_pgdata] at 2023-02-06 00:39:03.265915454 +0100 CET by root@sheep> to /home/paperless_user/tmp/restore-target
+# verifying files in /home/paperless_user/tmp/restore-target
+# finished verifying 1988 files in /home/paperless_user/tmp/restore-target (took 1.017s)
+#
+# [paperless_user@sheep paperless-ngx]$ pwd
+# /home/paperless_user/paperless-ngx
+#
+# [paperless_user@sheep paperless-ngx]$ cd ../tmp/restore-target/
+#
+# [paperless_user@sheep restore-target]$ ls -lah
+# total 12K
+# drwxr-xr-x 3 root root 4.0K Feb  6 22:06 .
+# drwxr-xr-x 3 root root 4.0K Feb  6 22:06 ..
+# drwxr-xr-x 3 root root 4.0K Feb  4 21:41 var
+#
+# [paperless_user@sheep restore-target]$ sudo ls -alh var/lib/docker/volumes
+# total 20K
+# drwx-----x 5 root root 4.0K Feb  5 00:23 .
+# drwx--x--- 3 root root 4.0K Feb  5 00:23 ..
+# drwx-----x 3 root root 4.0K Dec 19 02:51 paperless-ngx_data
+# drwx-----x 3 root root 4.0K Dec 19 02:51 paperless-ngx_media
+# drwx-----x 3 root root 4.0K Dec 19 02:51 paperless-ngx_pgdata
+#
+# [paperless_user@sheep restore-target]$ sudo du -hs
+# 224M	.
+#
+# [paperless_user@sheep restore-target]$ sudo ls -alh var/lib/docker/volumes/paperless-ngx_data/_data
+# total 42M
+# drwxr-xr-x 5 patrick patrick 4.0K Feb  5 00:39 .
+# drwx-----x 3 root    root    4.0K Dec 19 02:51 ..
+# -rw-r--r-- 1 patrick patrick  20K Feb  6 00:39 celerybeat-schedule.db
+# -rw-r--r-- 1 patrick patrick  42M Jan 29 01:05 classification_model.pickle
+# drwxr-xr-x 2 patrick patrick 4.0K Feb  6 00:00 index
+# -rw-r--r-- 1 patrick patrick    2 Dec 19 02:52 .index_version
+# drwxr-xr-x 2 patrick patrick 4.0K Dec 19 02:52 log
+# -rw-r--r-- 1 patrick patrick    0 Feb  5 00:39 migration_lock
+# drwxr-xr-x 5 patrick patrick 4.0K Dec 19 02:51 nltk
