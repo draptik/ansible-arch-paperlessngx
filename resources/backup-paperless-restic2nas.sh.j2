@@ -44,10 +44,15 @@ readonly DOCKER_COMPOSE_DIRECTORY="/home/{{ paperless_user }}/paperless-ngx"
 
 ## Shut down docker-compose ----------------------
 printf "%s Shutting down docker...\n" "$(timestamp)" >> "${LOG_FILE}"
+# shellcheck disable=SC2129
+printf "%s Shutting down docker...\n" "$(timestamp)" >> "${DOCKER_LOG_FILE}"
+
 docker-compose \
     --project-directory="${DOCKER_COMPOSE_DIRECTORY}" \
     down \
     >> "${DOCKER_LOG_FILE}" 2>&1
+
+printf "%s Finished shutting down docker...\n" "$(timestamp)" >> "${DOCKER_LOG_FILE}"
 
 ## The actual backups... -------------------------
 readonly RESTIC_PASSWORD_FILE="{{ restic_password_file_location }}"
@@ -68,10 +73,15 @@ printf "%s Finished with RESTIC.\n" "$(timestamp)" >> "${LOG_FILE}"
 
 ## Restart docker-compose ------------------------
 printf "%s Restarting docker...\n" "$(timestamp)" >> "${LOG_FILE}"
+# shellcheck disable=SC2129
+printf "%s Restarting docker...\n" "$(timestamp)" >> "${DOCKER_LOG_FILE}"
+
 docker-compose \
     --project-directory="${DOCKER_COMPOSE_DIRECTORY}" \
     up \
     --detach \
     >> "${DOCKER_LOG_FILE}" 2>&1
+
+printf "%s Finished restarting docker...\n" "$(timestamp)" >> "${DOCKER_LOG_FILE}"
 
 printf "%s DONE.\n%s -----------------------\n" "$(timestamp)" "$(timestamp)" >> "${LOG_FILE}"
