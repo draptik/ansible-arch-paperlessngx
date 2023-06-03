@@ -84,6 +84,7 @@
           - jq
           - neofetch
           - reflector
+          - kitty-terminfo
       become: true
       become_user: aur_builder
 
