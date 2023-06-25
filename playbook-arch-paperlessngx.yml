@@ -70,6 +70,7 @@
       aur:
         use: yay
         name:
+          - python-pipx
           - tmux
           - zsh
           - bat
@@ -116,17 +117,9 @@
           - docker-compose
           - python-pip
           - python-setuptools
+          - python-docker
       become: true
       become_user: aur_builder
-
-    # TODO Not sure if this can be replaced by Arch packages?
-    - name: Install python packages for `docker` (using pip)
-      become: true
-      become_user: "{{ paperless_user }}"
-      ansible.builtin.pip:
-        name:
-          - docker
-          - docker-compose
 
     - name: Ensure group `docker` exists
       become: true
