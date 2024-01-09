@@ -173,7 +173,8 @@
         name: paperless-ngx-webserver-1
       register: docker_result
 
-    - name: Stop docker-compose (why is this needed?)
+    # We have to do this manually, otherwise the containers are restarted automatically because of `restart: unless-stopped` in docker-compose
+    - name: Stop docker-compose
       become: true
       become_user: "{{ paperless_user }}"
       community.docker.docker_compose:
