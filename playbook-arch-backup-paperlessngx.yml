@@ -84,8 +84,8 @@
       become: true
       become_user: root
       ansible.builtin.template:
-        src: ./resources/restic-pw.j2
-        dest: /root/restic-pw
+        src: ./resources/restic-pw-paperless.j2
+        dest: /root/restic-pw-paperless
         mode: '0600'
       
     - name: Start and enable system.d timer for restic backup
