@@ -83,11 +83,29 @@
           - fd
           - ncdu
           - jq
-          - neofetch
+          - fastfetch
           - reflector
           - kitty-terminfo
+          - pacman-contrib
       become: true
       become_user: aur_builder
+
+    # Copy pacman hook to clean pacman cache on update
+    - name: Setup paccache hook 1/2 - Create hook directory
+      become: true
+      become_user: root
+      ansible.builtin.file:
+        path: /etc/pacman.d/hooks
+        state: directory
+        mode: '0755'
+
+    - name: Setup paccache hook 2/2 - Copy hook
+      become: true
+      become_user: root
+      ansible.builtin.template:
+        src: ./resources/clean-pacman-package-cache.hook
+        dest: /etc/pacman.d/hooks/clean-pacman-package-cache.hook
+        mode: '0644'
 
     # Paperless-ngx --------------------------------------------------------
     - name: Create the `paperless` user
